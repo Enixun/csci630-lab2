@@ -1,4 +1,4 @@
-from math import log
+from math import log, inf
 from reprlib import Repr
 
 class DecisionTree(dict):
@@ -72,7 +72,7 @@ class DecisionTree(dict):
         return False
     return True
 
-  def __init__(self, examples, attributes, parent=None):
+  def __init__(self, examples, attributes, max_depth=inf, parent=None):
     self.value = None
     self.best_question = None
     self.children = None
@@ -82,7 +82,7 @@ class DecisionTree(dict):
     entropy = DecisionTree.get_entropy(examples)
     if (
       entropy == 0 or entropy < DecisionTree.threshold or 
-      DecisionTree.no_more(attributes)
+      DecisionTree.no_more(attributes) or max_depth == 0
     ):
       print(attributes,entropy)
       self.value = DecisionTree.majority(examples)
@@ -93,7 +93,7 @@ class DecisionTree(dict):
     new_attributes[best_question] = None
     self.children = {}
     for answer, new_examples in answers.items():
-      self.children[answer] = DecisionTree(new_examples,new_attributes,self)
+      self.children[answer] = DecisionTree(new_examples,new_attributes,max_depth-1,self)
 
   def __repr__(self):
     return (

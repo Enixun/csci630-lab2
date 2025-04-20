@@ -1,6 +1,5 @@
 from unittest import TestCase
 from src.decision_tree import DecisionTree
-from reprlib import Repr
 
 class DecisionTreeTests(TestCase):
   def test_class_data(self):
@@ -52,7 +51,7 @@ class DecisionTreeTests(TestCase):
       'veg?', 'iphone?', 'student?', 'american?', 'drinks coffee'
     ]
 
-    dt = DecisionTree(test_data, index_map)
+    dt = DecisionTree(test_data, index_map, 3)
     print(dt)
 
     self.assertIsNotNone(dt, 'Expected Decision Tree to exists')
