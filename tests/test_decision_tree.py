@@ -4,26 +4,26 @@ from src.decision_tree import DecisionTree
 class DecisionTreeTests(TestCase):
   def setUp(self):
     self.test_data = [
-      ['N','Y','N','Y','Y'],
-      ['N','N','N','N','Y'],
-      ['Y','Y','Y','Y','Y'],
-      ['Y','N','Y','N','N'],
-      ['N','N','Y','Y','N'],
-      ['N','Y','N','N','Y'],
-      ['Y','Y','N','Y','Y'],
-      ['N','Y','Y','N','N'],
-      ['Y','N','N','Y','Y'],
-      ['Y','N','N','N','N'],
-      ['Y','Y','Y','Y','N'],
-      ['N','Y','N','N','Y'],
-      ['N','N','Y','Y','Y'],
-      ['Y','N','Y','N','N'],
-      ['Y','N','N','Y','Y'],
-      ['N','N','Y','N','Y'],
-      ['Y','Y','Y','Y','N'],
-      ['N','Y','N','N','Y'],
-      ['Y','N','Y','N','Y'],
-      ['Y','Y','N','N','N'],
+      ('N','Y','N','Y','Y'),
+      ('N','N','N','N','Y'),
+      ('Y','Y','Y','Y','Y'),
+      ('Y','N','Y','N','N'),
+      ('N','N','Y','Y','N'),
+      ('N','Y','N','N','Y'),
+      ('Y','Y','N','Y','Y'),
+      ('N','Y','Y','N','N'),
+      ('Y','N','N','Y','Y'),
+      ('Y','N','N','N','N'),
+      ('Y','Y','Y','Y','N'),
+      ('N','Y','N','N','Y'),
+      ('N','N','Y','Y','Y'),
+      ('Y','N','Y','N','N'),
+      ('Y','N','N','Y','Y'),
+      ('N','N','Y','N','Y'),
+      ('Y','Y','Y','Y','N'),
+      ('N','Y','N','N','Y'),
+      ('Y','N','Y','N','Y'),
+      ('Y','Y','N','N','N'),
     ]
 
     self.index_map = [
@@ -32,16 +32,16 @@ class DecisionTreeTests(TestCase):
 
   def test_class_data(self):
     test_data = [
-      ['N','Y','Y','Y','Y'],
-      ['N','N','N','Y','N'],
-      ['N','N','Y','N','N'],
-      ['N','Y','N','Y','Y'],
-      ['Y','Y','Y','N','Y'],
-      ['N','N','Y','N','N'],
-      ['N','Y','Y','N','Y'],
-      ['N','N','N','Y','N'],
-      ['N','N','Y','N','Y'],
-      ['N','Y','N','N','N'],
+      ('N','Y','Y','Y','Y'),
+      ('N','N','N','Y','N'),
+      ('N','N','Y','N','N'),
+      ('N','Y','N','Y','Y'),
+      ('Y','Y','Y','N','Y'),
+      ('N','N','Y','N','N'),
+      ('N','Y','Y','N','Y'),
+      ('N','N','N','Y','N'),
+      ('N','N','Y','N','Y'),
+      ('N','Y','N','N','N'),
     ]
     index_map = [
       'reserv?', 'long wait?', 'weekend?', 'rain?', 'will wait?'
