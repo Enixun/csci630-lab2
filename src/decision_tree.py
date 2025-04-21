@@ -3,7 +3,17 @@ from math import log, inf
 class DecisionTree(dict):
   threshold = 0.00001
   @staticmethod
-  def generate_answers(examples, answer_index=None):
+  def generate_answers(examples:list, answer_index:int=None):
+    """
+    Generate a dict of possible values for an attribute in an set of entities with their frequency.
+
+    Args:
+      examples - a list of tuples representing data points.
+      answer_index - the attribute of an entity being searched. Defaults to the last attribute.
+
+    Returns:
+      answers
+    """
     if answer_index is None:
       answer_index = len(examples[0]) - 1
     answers = {}
@@ -15,7 +25,16 @@ class DecisionTree(dict):
     return answers
 
   @staticmethod
-  def majority(examples):
+  def majority(examples:list):
+    """
+    Find the majority answer (final column) within a set of examples.
+
+    Args:
+      examples - a list of tuples representing data points.
+
+    Returns:
+      majority answer
+    """
     cur_max = None
     answers = DecisionTree.generate_answers(examples)
     for answer in answers:
@@ -24,7 +43,16 @@ class DecisionTree(dict):
     return cur_max
   
   @staticmethod
-  def get_entropy(examples):
+  def get_entropy(examples:list) -> float:
+    """
+    Calculate the entropy of set of examples based on their answer attribute (final column).
+
+    Args:
+      examples - a list of tuples representing data points.
+
+    Returns:
+      entropy
+    """
     answers = DecisionTree.generate_answers(examples)
     entropy = 0
     for answer in answers:
@@ -33,7 +61,18 @@ class DecisionTree(dict):
     return entropy
   
   @staticmethod
-  def partition(examples, attribute_index, answer):
+  def partition(examples:list, attribute_index:int, answer) -> list:
+    """
+    Generate a subset of examples where a provided attribute matches an answer.
+
+    Args:
+      examples - a list of tuples representing data points.
+      answer_index - the attribute of an entity being searched.
+      answer - searched value to match
+
+    Returns:
+      partition
+    """
     partition = []
     for example in examples:
       if example[attribute_index] == answer:
@@ -41,7 +80,19 @@ class DecisionTree(dict):
     return partition
   
   @staticmethod
-  def best_question(examples, attributes, parent_entropy=None):
+  def best_question(examples:list, attributes:list, parent_entropy:float=None):
+    """
+    Find the best attribute to search for by comparing information gain of possible attributes.
+
+    Args:
+      examples - a list of tuples representing data points.
+      attributes - a list of remaining attributes to act as next question. Last column is excluded (assumed actual answer)
+      parent_entropy - Entropy of the previous question. If not provided, is calculated from given examples.
+
+    Returns:
+      [best_attribute, best_options] - Index of the chosen attribute and dictionary of with keys of possible answers 
+      and values of partitioned data with attribute values of the key option.
+    """
     if parent_entropy is None:
       parent_entropy = DecisionTree.get_entropy(examples)
     total_count = len(examples)
@@ -65,7 +116,10 @@ class DecisionTree(dict):
     return [best_attr, best_options]
   
   @staticmethod
-  def no_more(attributes):
+  def no_more(attributes:list) -> bool:
+    """
+    Check if there are any remaining attributes (excluding answer column).
+    """
     for attr_index in range(len(attributes) - 1):
       if attributes[attr_index] is not None:
         return False
