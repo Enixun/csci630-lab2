@@ -127,7 +127,8 @@ class DecisionTree(dict):
 
   def __init__(self, examples, attributes, max_depth=inf, parent=None):
     self.value = None
-    self.best_question = None
+    self.best_attr_index = None
+    self.best_attribute = None
     self.children = None
     if len(examples) == 0:
       self.value = self.majority(parent)
@@ -140,20 +141,30 @@ class DecisionTree(dict):
       # print(attributes,entropy)
       self.value = DecisionTree.majority(examples)
       return
-    best_question, answers = DecisionTree.best_question(examples, attributes, entropy)
-    self.best_question = attributes[best_question]
+    best_question_index, answers = DecisionTree.best_question(examples, attributes, entropy)
+    self.best_attr_index = best_question_index
+    self.best_attribute = attributes[best_question_index]
     new_attributes = attributes.copy()
-    new_attributes[best_question] = None
+    new_attributes[best_question_index] = None
     self.children = {}
     for answer, new_examples in answers.items():
       self.children[answer] = DecisionTree(new_examples,new_attributes,max_depth-1,self)
+
+  def predict(self, example):
+    """
+    Predict an outcome based on training data. Example should have a length of completed data array - 1.
+    Recurse down tree looking at attribute for each node until leaf is found.
+    """
+    if self.value is not None: return self.value
+    option = example[self.best_attr_index]
+    return self.children.get(option,None).predict(example) if self.children[option] is not None else None
 
   def __repr__(self):
     return (
       "DecisionTree(" + 
       (("value:" + str(self.value)) if self.value is not None else '') +
-      (("\nquestion:" + self.best_question) if self.best_question is not None else '')+
-      (("\nchildren{\n" + '\n'.join(map(lambda i: self.best_question + " " +repr(i[0]) + ': ' + repr(i[1]),self.children.items()))+"\n}")
+      (("\nquestion:" + self.best_attribute) if self.best_attribute is not None else '')+
+      (("\nchildren{\n" + '\n'.join(map(lambda i: self.best_attribute + " " +repr(i[0]) + ': ' + repr(i[1]),self.children.items()))+"\n}")
        if self.children is not None else ''
       )+
       ")"
@@ -168,7 +179,7 @@ class DecisionTree(dict):
       for key in self.children.keys():
         if dt['children'][key] != self.children[key]:
           return False
-      return self.best_question == dt.get('best_question', None)
+      return self.best_attribute == dt.get('best_question', None)
   
   def __ne__(self, dt):
     if self.value is not None:
@@ -179,4 +190,4 @@ class DecisionTree(dict):
       for key in self.children.keys():
         if dt['children'][key] != self.children[key]:
           return True
-      return self.best_question != dt.get('best_question', None)
+      return self.best_attribute != dt.get('best_question', None)
