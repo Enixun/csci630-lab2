@@ -1,5 +1,4 @@
 from math import log, inf
-from reprlib import Repr
 
 class DecisionTree(dict):
   threshold = 0.00001
@@ -84,7 +83,7 @@ class DecisionTree(dict):
       entropy == 0 or entropy < DecisionTree.threshold or 
       DecisionTree.no_more(attributes) or max_depth == 0
     ):
-      print(attributes,entropy)
+      # print(attributes,entropy)
       self.value = DecisionTree.majority(examples)
       return
     best_question, answers = DecisionTree.best_question(examples, attributes, entropy)
@@ -100,6 +99,30 @@ class DecisionTree(dict):
       "DecisionTree(" + 
       (("value:" + str(self.value)) if self.value is not None else '') +
       (("\nquestion:" + self.best_question) if self.best_question is not None else '')+
-      (("\nchildren{\n" + '\n'.join(map(lambda i: self.best_question + " " +repr(i[0]) + ': ' + repr(i[1]),self.children.items()))+"\n}") if self.children is not None else '')+
+      (("\nchildren{\n" + '\n'.join(map(lambda i: self.best_question + " " +repr(i[0]) + ': ' + repr(i[1]),self.children.items()))+"\n}")
+       if self.children is not None else ''
+      )+
       ")"
     )
+  
+  def __eq__(self, dt):
+    if self.value is not None:
+      return self.value == dt.get('value',None)
+    else:
+      if 'children' not in dt or len(self.children.keys()) != len(dt['children'].keys()):
+        return False
+      for key in self.children.keys():
+        if dt['children'][key] != self.children[key]:
+          return False
+      return self.best_question == dt.get('best_question', None)
+  
+  def __ne__(self, dt):
+    if self.value is not None:
+      return self.value != dt.get('value',None)
+    else:
+      if 'children' not in dt or len(self.children.keys()) != len(dt['children'].keys()):
+        return True
+      for key in self.children.keys():
+        if dt['children'][key] != self.children[key]:
+          return True
+      return self.best_question != dt.get('best_question', None)

@@ -51,7 +51,43 @@ class DecisionTreeTests(TestCase):
       'veg?', 'iphone?', 'student?', 'american?', 'drinks coffee'
     ]
 
-    dt = DecisionTree(test_data, index_map, 3)
-    print(dt)
+    expected = {
+      'best_question':'student?',
+      'children':{
+        0: {
+          'best_question':'veg?',
+          'children':{
+            0: {'value':1},
+            1: {
+              'best_question':'american?',
+              'children':{
+                0:{'value':0},
+                1:{'value':1}
+              }
+            }
+          }
+        },
+        1:{
+          'best_question':'iphone?',
+          'children':{
+            0:{
+              'best_question':'veg?',
+              'children':{
+                0:{'value':1},
+                1:{'value':0}
+              }
+            },
+            1:{
+              'best_question':'veg?',
+              'children':{
+                0:{'value':0},
+                1:{'value':0},
+              }
+            }
+          }
+        }
+      }
+    }
 
-    self.assertIsNotNone(dt, 'Expected Decision Tree to exists')
+    dt = DecisionTree(test_data, index_map, 3)
+    self.assertEqual(expected,dt, "Build decision tree did not match expected output.")
