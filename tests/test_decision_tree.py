@@ -94,9 +94,29 @@ class DecisionTreeTests(TestCase):
     dt = DecisionTree(self.test_data, self.index_map, 3)
     self.assertEqual(expected,dt, "Build decision tree did not match expected output.")
 
-  def test_predict(self):
+  def test_predict_simple_data(self):
     sample = self.test_data[0][:-1]
     expected = self.test_data[0][len(sample)]
     dt = DecisionTree(self.test_data, self.index_map, 3)
     actual = dt.predict(sample)
     self.assertEqual(expected,actual, f"Expected prediction of {sample} to be {expected}.")
+
+  def test_predict_contradictory_data(self):
+    samples = list(filter(lambda x : (x[0] == 'Y' and x[1] == 'Y' and x[2] == 'Y' and x[3] == 'Y'), self.test_data))
+    majority = DecisionTree.majority(samples)
+    dt = DecisionTree(self.test_data, self.index_map, 3)
+    for sample in samples:
+      input = sample[:-1]
+      predicted_outcome = dt.predict(input)
+      real_outcome = sample[len(input)]
+      if real_outcome == majority:
+        self.assertEqual(
+          real_outcome, predicted_outcome, 
+          f"Outcome {real_outcome} should have matched predicted outcome {predicted_outcome}"
+        )
+      else:
+        self.assertNotEqual(
+          real_outcome, predicted_outcome,
+          f"Outcome {real_outcome} should not have matched predicted outcome {predicted_outcome}"
+        )
+      
