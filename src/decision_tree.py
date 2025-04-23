@@ -1,7 +1,6 @@
 from math import log, inf
 
-class DecisionTree(dict):
-  threshold = 0.00001
+class DecisionTree():
   @staticmethod
   def generate_answers(examples:list, answer_index:int=None):
     """
@@ -125,7 +124,7 @@ class DecisionTree(dict):
         return False
     return True
 
-  def __init__(self, examples, attributes, max_depth=inf, parent=None):
+  def __init__(self, examples, attributes, max_depth=inf, threshold=0.00001, parent=None):
     self.value = None
     self.best_attr_index = None
     self.best_attribute = None
@@ -135,7 +134,7 @@ class DecisionTree(dict):
       return
     entropy = DecisionTree.get_entropy(examples)
     if (
-      entropy == 0 or entropy < DecisionTree.threshold or 
+      entropy == 0 or entropy < threshold or 
       DecisionTree.no_more(attributes) or max_depth == 0
     ):
       # print(attributes,entropy)
@@ -148,7 +147,7 @@ class DecisionTree(dict):
     new_attributes[best_question_index] = None
     self.children = {}
     for answer, new_examples in answers.items():
-      self.children[answer] = DecisionTree(new_examples,new_attributes,max_depth-1,self)
+      self.children[answer] = DecisionTree(new_examples,new_attributes,max_depth-1,threshold,self)
 
   def predict(self, example):
     """
