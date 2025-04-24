@@ -94,6 +94,7 @@ class WeatherReport():
       "\ncity:"+ self.city +
       ",\nmonth:"+ self.month +
       ",\nyear:"+ self.year +
+      ",\nattributes:"+ str(WeatherReport.attributes) +
       ",\nreports:\n  "+ ',\n  '.join(map(lambda r: str(r),self.reports)) +
       "\n)"
     )
@@ -102,7 +103,6 @@ class WeatherReport():
 def main():
   for city in ['ROC', 'BUF', 'DTW']:
     for i in range(1,50):
-      print(city, i)
       res = requests.get(f'https://forecast.weather.gov/product.php?site=BUF&issuedby={city}&product=CF6&format=txt&version={i}&glossary=0')
       report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
       wr = WeatherReport(report_string)
