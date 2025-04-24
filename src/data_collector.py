@@ -77,7 +77,7 @@ class WeatherReport():
 
   def parse_report(self, report_string:str)->tuple[float|str]:
     parsed = WeatherReport.parse_report_str(report_string)
-    parsed[0] = date(int(self.year),month_map(self.month),parsed[0]).strftime('%D')
+    parsed[0] = self.city + '-' + date(int(self.year),month_map(self.month),parsed[0]).strftime('%D')
     # print(datetime.strptime(parsed[0],'%m/%d/%y'))
     return tuple(parsed)
 
@@ -100,10 +100,13 @@ class WeatherReport():
 
 
 def main():
-  res = requests.get('https://forecast.weather.gov/product.php?site=BUF&issuedby=ROC&product=CF6&format=txt&version=2&glossary=0')
-  report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
-  wr = WeatherReport(report_string)
-  print(wr)
+  for city in ['ROC', 'BUF', 'DTW']:
+    for i in range(1,50):
+      print(city, i)
+      res = requests.get(f'https://forecast.weather.gov/product.php?site=BUF&issuedby={city}&product=CF6&format=txt&version={i}&glossary=0')
+      report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
+      wr = WeatherReport(report_string)
+      print(wr)
 
 
 if __name__ == '__main__':
