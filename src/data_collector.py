@@ -80,6 +80,23 @@ class WeatherReport():
     parsed[0] = self.city + '-' + date(int(self.year),month_map(self.month),parsed[0]).strftime('%D')
     # print(datetime.strptime(parsed[0],'%m/%d/%y'))
     return tuple(parsed)
+  
+  @staticmethod
+  def date_to_str(date:datetime):
+    return datetime.strftime(date,'%m/%d/%y')
+  
+  @staticmethod
+  def str_to_date(date_str:str):
+    return datetime.strptime(date_str,'%m/%d/%y')
+  
+  def to_dict(self)->dict:
+    report_dict = {
+      'attributes': self.attributes[1:],
+      self.city: {}
+    }
+    for report in self.reports:
+      report_dict[self.city][re.search(r'(?<=-)\S+',report[0]).group(0)] = report[1:]
+    return report_dict
 
   def __init__(self, report:str):
     self.month = re.search(r'MONTH:\s+(\w+)',report,re.DOTALL).group(1)
@@ -107,6 +124,7 @@ def main():
       report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
       wr = WeatherReport(report_string)
       print(wr)
+      print(wr.to_dict())
 
 
 if __name__ == '__main__':
