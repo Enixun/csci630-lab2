@@ -1,5 +1,35 @@
 import requests
 import re
+from datetime import date, datetime
+
+def month_map(month:str)->int:
+  match month:
+    case 'JANUARY':
+      return 1
+    case 'FEBRUARY':
+      return 2
+    case 'MARCH':
+      return 3
+    case 'APRIL':
+      return 4
+    case 'MAY':
+      return 5
+    case 'JUNE':
+      return 6
+    case 'JULY':
+      return 7
+    case 'AUGUST':
+      return 8
+    case 'SEPTEMBER':
+      return 9
+    case 'OCTOBER':
+      return 10
+    case 'NOVEMBER':
+      return 11
+    case 'DECEMBER':
+      return 12
+    case _:
+      raise Exception('Invalid Month')
 
 class WeatherReport():
   attributes = (
@@ -43,22 +73,28 @@ class WeatherReport():
         if i > 17: parsed_data.append(WeatherReport.string_to_type(data[i-1]))
         else: parsed_data.append(None)
       else: parsed_data.append(WeatherReport.string_to_type(data[i]))
-    return tuple(parsed_data)
+    return parsed_data
+
+  def parse_report(self, report_string:str)->tuple[float|str]:
+    parsed = WeatherReport.parse_report_str(report_string)
+    parsed[0] = date(int(self.year),month_map(self.month),parsed[0]).strftime('%D')
+    # print(datetime.strptime(parsed[0],'%m/%d/%y'))
+    return tuple(parsed)
 
   def __init__(self, report:str):
     self.month = re.search(r'MONTH:\s+(\w+)',report,re.DOTALL).group(1)
     self.year = re.search(r'YEAR:\s+(\w+)',report,re.DOTALL).group(1)
     self.city = re.search(r'CF6(\w{3})',report,re.DOTALL).group(1)
     report_data = re.findall(r'(?<=\n) *?(?:(?:\w+|[0-9.\-]+) +?){17,18}(?:\w+|[0-9.\-]+)(?=\n)', report)
-    self.reports = tuple(map(lambda r: WeatherReport.parse_report_str(r),report_data[1:]))
+    self.reports = tuple(map(lambda r: self.parse_report(r),report_data[1:]))
 
   def __repr__(self):
     return (
       "WeatherReport(" +
       "\ncity:"+ self.city +
-      "\nmonth:"+ self.month +
-      "\nyear:"+ self.year +
-      "\nreports:\n  "+ ',\n  '.join(map(lambda r: str(r),self.reports)) +
+      ",\nmonth:"+ self.month +
+      ",\nyear:"+ self.year +
+      ",\nreports:\n  "+ ',\n  '.join(map(lambda r: str(r),self.reports)) +
       "\n)"
     )
 
