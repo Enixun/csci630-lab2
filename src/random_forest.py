@@ -19,14 +19,18 @@ class RandomForest():
 
 
   def train(self, examples:list, attributes:list):
+    used_subsets = set()
     while(len(self.trees) < self.num_trees):
-      self.trees.append(
-        DecisionTree(
-          examples,
-          self.attribute_subset(attributes),
-          self.max_depth
+      subset = self.attribute_subset(attributes)
+      if str(subset) not in used_subsets:
+        self.trees.append(
+          DecisionTree(
+            examples,
+            subset,
+            self.max_depth
+          )
         )
-      )
+        used_subsets.add(str(subset))
 
   def predict(self, example):
     freq = {}
@@ -38,7 +42,7 @@ class RandomForest():
       freq[result] += 1
       if max is None or freq[max] < freq[result]:
         max = result
-    print(freq)
+    # print(freq)
     return max
 
 
