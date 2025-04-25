@@ -77,7 +77,7 @@ class WeatherReport():
 
   def parse_report(self, report_string:str)->tuple[float|str]:
     parsed = WeatherReport.parse_report_str(report_string)
-    parsed[0] = self.city + '-' + date(int(self.year),month_map(self.month),parsed[0]).strftime('%D')
+    parsed[0] = date(int(self.year),month_map(self.month),parsed[0]).strftime('%D') + '-' + self.city
     # print(datetime.strptime(parsed[0],'%m/%d/%y'))
     return tuple(parsed)
   
@@ -92,10 +92,11 @@ class WeatherReport():
   def to_dict(self)->dict:
     report_dict = {
       'attributes': self.attributes[1:],
-      self.city: {}
+      'city': self.city,
+      'reports': {}
     }
     for report in self.reports:
-      report_dict[self.city][re.search(r'(?<=-)\S+',report[0]).group(0)] = report[1:]
+      report_dict['reports'][re.search(r'\S+(?=-)',report[0]).group(0)] = report[1:]
     return report_dict
 
   def __init__(self, report:str):

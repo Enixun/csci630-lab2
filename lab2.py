@@ -32,14 +32,16 @@ def get_training_data():
     'testing': {}
   }
   for city in ['ROC', 'BUF', 'DTW']:
-    aggregate['training'][city] = {}
-    aggregate['testing'][city] = {}
     for i in range(50):
       res = requests.get(f'https://forecast.weather.gov/product.php?site=BUF&issuedby={city}&product=CF6&format=txt&version={i+1}&glossary=0')
       report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
       wr = WeatherReport(report_string).to_dict()
-      for date in wr[city].keys():
-        aggregate['training' if i > 2 else 'testing'][city][date] = wr[city][date]
+      # print(wr)
+      subset = 'training' if i > 1 else 'testing'
+      for date in wr['reports'].keys():
+        if date not in aggregate[subset]: 
+          aggregate[subset][date] = {}
+        aggregate[subset][date][city] = wr['reports'][date]
       print(city, i+1, 'done')
   data_store(operation='w',data=aggregate)
   return aggregate
@@ -95,12 +97,13 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
   greater_than = lambda x,y: x > y
   less_than = lambda x,y: x < y
 
-  for day in sample_data['ROC'].keys():
-    roc_today = sample_data['ROC'][day]
+  for day in sample_data.keys():
+    reports_today = sample_data[day]
     prev_day = WeatherReport.date_to_str(WeatherReport.str_to_date(day) - timedelta(days=1))
-    if sample_data['ROC'].get(day, None) is None or sample_data['ROC'].get(prev_day, None) is None:
+    if sample_data.get(prev_day,None) is None:
       continue
-    roc_prev = sample_data['ROC'][prev_day]
+    roc_today = sample_data[day]['ROC']
+    roc_prev = sample_data[prev_day]['ROC']
     hotter_today = check_missing_attribute(roc_today[temp_ind],roc_prev[temp_ind],greater_than)
     if hotter_today is None: continue
     attrs = []
@@ -108,7 +111,7 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
       ai = attribute_indices[i]
       roc_prev_attr = roc_prev[ai]
       for city in cities:
-        city_prev_attr = sample_data[city][prev_day][ai]
+        city_prev_attr = sample_data[prev_day][city][ai]
         if i < 2:
           attrs.append(check_precip(city_prev_attr))
         elif city == 'ROC' and i == len(attribute_indices) - 1:
