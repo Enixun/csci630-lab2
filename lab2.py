@@ -6,6 +6,11 @@ from src.data_collector import WeatherReport
 from src.decision_tree import DecisionTree
 from src.random_forest import RandomForest
 
+cities = [
+  'BUF','DTW','ART','CLE','GRR','LAN','AZO','TOL','ERI','FWA','SBN','PIT',
+  'MGW','MDT','BFD','CVG','CMH','DAY','ORD','FNT','MBS','MKG','IND','MKE','ROC'
+]
+
 def data_store(file='./raw.json',operation='r',data=None,indent=None):
   """
   Open a file and either read and parse its JSON, or stringify JSON and write to file. Pass in indent to add pretty margins.
@@ -18,12 +23,12 @@ def data_store(file='./raw.json',operation='r',data=None,indent=None):
       file.write(dumps(data,indent=indent))
 
 
-def get_training_data():
+def get_training_data(data_file:str='./raw.json'):
   """
   Read from data file or query forecast.weather.gov and parse to WeatherReport format, writing contents to file.
   """
   try:
-    return data_store()
+    return data_store(data_file)
   except OSError as ose: {
     print(ose, 'Fetching data...')
   }
@@ -32,19 +37,19 @@ def get_training_data():
     'training': {},
     'testing': {}
   }
-  for city in ['ROC', 'BUF', 'DTW']:
+  for city in cities:
     for i in range(50):
       res = requests.get(f'https://forecast.weather.gov/product.php?site=BUF&issuedby={city}&product=CF6&format=txt&version={i+1}&glossary=0')
       report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
       wr = WeatherReport(report_string).to_dict()
       # print(wr)
-      subset = 'training' if i > 1 else 'testing'
+      subset = 'training' if i > 13 else 'testing'
       for date in wr['reports'].keys():
         if date not in aggregate[subset]: 
           aggregate[subset][date] = {}
         aggregate[subset][date][city] = wr['reports'][date]
       print(city, i+1, 'done')
-  data_store(operation='w',data=aggregate)
+  data_store(data_file,operation='w',data=aggregate)
   return aggregate
 
 
@@ -64,26 +69,13 @@ def check_precip(amount:str|float,threshold=0.2)->bool:
   return check_missing_attribute(amount, threshold, lambda x,y: x > y)
 
 
-def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
+def construct_hotter_daily_data(weather_data:dict,nested=None):
   """
   Contruct a Decision Tree for checking if it will be hotter in Rochester than the previous day. 
   """
   attributes = weather_data['attributes']
   sample_data = weather_data[nested] if nested is not None else weather_data
-  new_attributes = (
-    'RAINED YESTERDAY IN BUF',
-    'RAINED YESTERDAY IN DTW',
-    'RAINED YESTERDAY IN ROC',
-    'SNOWED YESTERDAY IN BUF',
-    'SNOWED YESTERDAY IN DTW',
-    'SNOWED YESTERDAY IN ROC',
-    'LOWER DEP YESTERDAY IN BUF',
-    'LOWER DEP YESTERDAY IN DTW',
-    'LOWER DEP YESTERDAY IN ROC',
-    'HOTTER YESTERDAY IN BUF',
-    'HOTTER YESTERDAY IN DTW',
-    'HOTTER TODAY'
-  )
+  new_attributes = []
   data = []
   # 0-1, precip indices
   # else, check_missing_attr
@@ -94,14 +86,27 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
     attributes.index('AVG TEMP (F)')
   ]
   temp_ind = attribute_indices[len(attribute_indices)-1]
-  cities = ['BUF','DTW','ROC']
   greater_than = lambda x,y: x > y
   less_than = lambda x,y: x < y
 
+  for i in range(len(attribute_indices)):
+    for city in cities:
+      if i < 2:
+        new_attributes.append(f'{attributes[attribute_indices[i]]} IN {city} {1} DAY AGO')
+      elif city == 'ROC' and i == len(attribute_indices) - 1:
+        new_attributes.append('HOTTER TODAY')
+      elif i == 2:
+        new_attributes.append(f'{city} LESS {attributes[attribute_indices[i]]} THAN ROC {1} DAY AGO')
+      else:
+        new_attributes.append(f'{city} MORE {attributes[attribute_indices[i]]} THAN ROC {1} DAY AGO')
+
   for day in sample_data.keys():
-    reports_today = sample_data[day]
     prev_day = WeatherReport.date_to_str(WeatherReport.str_to_date(day) - timedelta(days=1))
-    if sample_data.get(prev_day,None) is None:
+    if (
+      sample_data.get(prev_day,None) is None or 
+      sample_data[day].get('ROC',None) is None or
+      sample_data[prev_day].get('ROC',None) is None
+    ):
       continue
     roc_today = sample_data[day]['ROC']
     roc_prev = sample_data[prev_day]['ROC']
@@ -112,6 +117,9 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
       ai = attribute_indices[i]
       roc_prev_attr = roc_prev[ai]
       for city in cities:
+        if sample_data[prev_day].get(city, None) is None:
+          attrs.append(None)
+          continue
         city_prev_attr = sample_data[prev_day][city][ai]
         if i < 2:
           attrs.append(check_precip(city_prev_attr))
@@ -132,7 +140,7 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
 
 
 def predict(model_type:str,day5:dict=None,day4:dict=None,day3:dict=None,day2:dict=None,day1:dict=None):
-  report_data = get_training_data()
+  report_data = get_training_data('./raw1.json')
   examples, attributes = construct_hotter_daily_data(report_data, 'training')
   model = None
   if model_type == 'besttree':

@@ -19,6 +19,8 @@ class RandomForest():
 
 
   def train(self, examples:list, attributes:list):
+    if not (len(attributes) > self.num_attributes):
+      raise Exception(f'Invalid number of attribute for random forest. Must have fewer attributes than {self.num_attributes}, provided {len(attributes)}')
     used_subsets = set()
     while(len(self.trees) < self.num_trees):
       subset = self.attribute_subset(attributes)

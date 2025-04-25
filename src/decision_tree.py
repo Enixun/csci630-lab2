@@ -125,6 +125,7 @@ class DecisionTree():
     return True
 
   def __init__(self, examples, attributes, max_depth=inf, threshold=0.00001, parent=None):
+    # TODO: Separate training logic from constructor, forgoing due to time
     self.value = None
     self.best_attr_index = None
     self.best_attribute = None

@@ -5,7 +5,7 @@ from src.random_forest import RandomForest
 
 class DecisionTreeTests(TestCase):
   def setUp(self):
-    self.data = get_training_data()
+    self.data = get_training_data('./raw.json')
 
   def test_hotter_today_decision_tree(self):
     data, attributes = construct_hotter_daily_data(self.data, 'training')
@@ -20,12 +20,12 @@ class DecisionTreeTests(TestCase):
       elif dt.predict(test_data[i]) is None:
         none_count += 1
     accuracy = number_correct / (len(test_data) - none_count)
-    print('decision tree', number_correct, len(test_data), accuracy)
+    print('decision tree', number_correct, len(test_data) - none_count, accuracy)
 
   def test_hotter_today_random_forest(self):
     data, attributes = construct_hotter_daily_data(self.data, 'training')
     test_data, test_attrs, answers = construct_hotter_daily_data(self.data, 'testing')
-    rf = RandomForest(10,len(test_attrs)-3,len(test_attrs))
+    rf = RandomForest(10,len(test_attrs) - 1,8)
     rf.train(data,attributes)
     self.assertIsNotNone(rf)
     number_correct = 0
@@ -36,4 +36,4 @@ class DecisionTreeTests(TestCase):
       elif rf.predict(test_data[i]) is None:
         none_count += 1
     accuracy = number_correct / (len(test_data) - none_count)
-    print('random forest', number_correct, len(test_data), accuracy)
+    print('random forest', number_correct, len(test_data) - none_count, accuracy)
