@@ -27,16 +27,19 @@ def get_training_data():
     print(ose, 'Fetching data...')
   }
   aggregate = {
-    'attributes': WeatherReport.attributes
+    'attributes': WeatherReport.attributes,
+    'training': {},
+    'testing': {}
   }
   for city in ['ROC', 'BUF', 'DTW']:
-    aggregate[city] = {}
+    aggregate['training'][city] = {}
+    aggregate['testing'][city] = {}
     for i in range(50):
       res = requests.get(f'https://forecast.weather.gov/product.php?site=BUF&issuedby={city}&product=CF6&format=txt&version={i+1}&glossary=0')
       report_string = re.search('(?:<pre.*?>)(.+)(?=</pre>)', res.text, re.DOTALL).group(1)
       wr = WeatherReport(report_string).to_dict()
       for date in wr[city].keys():
-        aggregate[city][date] = wr[city][date]
+        aggregate['training' if i > 2 else 'testing'][city][date] = wr[city][date]
       print(city, i+1, 'done')
   data_store(operation='w',data=aggregate,indent=2)
   return aggregate
@@ -63,6 +66,7 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
   Contruct a Decision Tree for checking if it will be hotter in Rochester than the previous day. 
   """
   attributes = weather_data['attributes']
+  training_data = weather_data['training']
   new_attributes = (
     'RAINED YESTERDAY IN BUF',
     'RAINED YESTERDAY IN DTW',
@@ -85,12 +89,12 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
   temp_ind = attribute_indices[len(attribute_indices)-1]
   cities = ['BUF','DTW','ROC']
 
-  for day in weather_data['ROC'].keys():
-    roc_today = weather_data['ROC'][day]
+  for day in training_data['ROC'].keys():
+    roc_today = training_data['ROC'][day]
     prev_day = WeatherReport.date_to_str(WeatherReport.str_to_date(day) - timedelta(days=1))
-    if weather_data['ROC'].get(day, None) is None or weather_data['ROC'].get(prev_day, None) is None:
+    if training_data['ROC'].get(day, None) is None or training_data['ROC'].get(prev_day, None) is None:
       continue
-    roc_prev = weather_data['ROC'][prev_day]
+    roc_prev = training_data['ROC'][prev_day]
     greater_than = lambda x,y: x > y
     hotter_today = check_missing_attribute(roc_today[temp_ind],roc_prev[temp_ind],greater_than)
     if hotter_today is None: continue
@@ -99,7 +103,7 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
       ai = attribute_indices[i]
       roc_prev_attr = roc_prev[ai]
       for city in cities:
-        city_prev_attr = weather_data[city][prev_day][ai]
+        city_prev_attr = training_data[city][prev_day][ai]
         if i < 2:
           attrs.append(check_precip(city_prev_attr))
         elif city == 'ROC' and i == len(attribute_indices) - 1:
