@@ -61,12 +61,12 @@ def check_precip(amount:str|float,threshold=0.2)->bool:
   return check_missing_attribute(amount, threshold, lambda x,y: x > y)
 
 
-def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
+def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
   """
   Contruct a Decision Tree for checking if it will be hotter in Rochester than the previous day. 
   """
   attributes = weather_data['attributes']
-  training_data = weather_data['training']
+  sample_data = weather_data[nested] if nested is not None else weather_data
   new_attributes = (
     'RAINED YESTERDAY IN BUF',
     'RAINED YESTERDAY IN DTW',
@@ -89,12 +89,12 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
   temp_ind = attribute_indices[len(attribute_indices)-1]
   cities = ['BUF','DTW','ROC']
 
-  for day in training_data['ROC'].keys():
-    roc_today = training_data['ROC'][day]
+  for day in sample_data['ROC'].keys():
+    roc_today = sample_data['ROC'][day]
     prev_day = WeatherReport.date_to_str(WeatherReport.str_to_date(day) - timedelta(days=1))
-    if training_data['ROC'].get(day, None) is None or training_data['ROC'].get(prev_day, None) is None:
+    if sample_data['ROC'].get(day, None) is None or sample_data['ROC'].get(prev_day, None) is None:
       continue
-    roc_prev = training_data['ROC'][prev_day]
+    roc_prev = sample_data['ROC'][prev_day]
     greater_than = lambda x,y: x > y
     hotter_today = check_missing_attribute(roc_today[temp_ind],roc_prev[temp_ind],greater_than)
     if hotter_today is None: continue
@@ -103,7 +103,7 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
       ai = attribute_indices[i]
       roc_prev_attr = roc_prev[ai]
       for city in cities:
-        city_prev_attr = training_data[city][prev_day][ai]
+        city_prev_attr = sample_data[city][prev_day][ai]
         if i < 2:
           attrs.append(check_precip(city_prev_attr))
         elif city == 'ROC' and i == len(attribute_indices) - 1:
@@ -112,8 +112,7 @@ def construct_hotter_daily_data(weather_data:dict)->DecisionTree:
           attrs.append(check_missing_attribute(city_prev_attr,roc_prev_attr,greater_than))
     data.append(tuple(attrs))
         
-  print(data)
-  print(DecisionTree(data,list(new_attributes)))
+  return (data, new_attributes)
 
 
 def predict(model_type:str,day5:dict,day4:dict,day3:dict,day2:dict,day1:dict):
