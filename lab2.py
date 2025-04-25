@@ -41,7 +41,7 @@ def get_training_data():
       for date in wr[city].keys():
         aggregate['training' if i > 2 else 'testing'][city][date] = wr[city][date]
       print(city, i+1, 'done')
-  data_store(operation='w',data=aggregate,indent=2)
+  data_store(operation='w',data=aggregate)
   return aggregate
 
 
@@ -74,6 +74,9 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
     'SNOWED YESTERDAY IN BUF',
     'SNOWED YESTERDAY IN DTW',
     'SNOWED YESTERDAY IN ROC',
+    'LOWER DEP YESTERDAY IN BUF',
+    'LOWER DEP YESTERDAY IN DTW',
+    'LOWER DEP YESTERDAY IN ROC',
     'HOTTER YESTERDAY IN BUF',
     'HOTTER YESTERDAY IN DTW',
     'HOTTER TODAY'
@@ -84,10 +87,13 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
   attribute_indices = [
     attributes.index('WTR PCPN'),
     attributes.index('SNOW'),
+    attributes.index('DEP'),
     attributes.index('AVG TEMP (F)')
   ]
   temp_ind = attribute_indices[len(attribute_indices)-1]
   cities = ['BUF','DTW','ROC']
+  greater_than = lambda x,y: x > y
+  less_than = lambda x,y: x < y
 
   for day in sample_data['ROC'].keys():
     roc_today = sample_data['ROC'][day]
@@ -95,7 +101,6 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
     if sample_data['ROC'].get(day, None) is None or sample_data['ROC'].get(prev_day, None) is None:
       continue
     roc_prev = sample_data['ROC'][prev_day]
-    greater_than = lambda x,y: x > y
     hotter_today = check_missing_attribute(roc_today[temp_ind],roc_prev[temp_ind],greater_than)
     if hotter_today is None: continue
     attrs = []
@@ -108,10 +113,15 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
           attrs.append(check_precip(city_prev_attr))
         elif city == 'ROC' and i == len(attribute_indices) - 1:
           attrs.append(roc_today[ai] > roc_prev_attr)
+        elif i == 2:
+          attrs.append(check_missing_attribute(city_prev_attr,roc_prev_attr,less_than))
         else:
           attrs.append(check_missing_attribute(city_prev_attr,roc_prev_attr,greater_than))
     data.append(tuple(attrs))
-        
+
+  if nested == 'testing':
+    data = tuple(map(lambda x: x[:-1],data))
+    new_attributes = new_attributes[:-1] 
   return (data, new_attributes)
 
 

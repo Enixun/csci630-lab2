@@ -156,7 +156,7 @@ class DecisionTree():
     """
     if self.value is not None: return self.value
     option = example[self.best_attr_index]
-    return self.children.get(option,None).predict(example) if self.children[option] is not None else None
+    return self.children[option].predict(example) if self.children.get(option,None) is not None else None
 
   def __repr__(self):
     return (
