@@ -11,29 +11,29 @@ class DecisionTreeTests(TestCase):
     data, attributes = construct_hotter_daily_data(self.data, 'training')
     dt = DecisionTree(data,list(attributes))
     self.assertIsNotNone(dt)
-    test_data, test_attrs = construct_hotter_daily_data(self.data, 'testing')
+    test_data, test_attrs, answers = construct_hotter_daily_data(self.data, 'testing')
     number_correct = 0
     none_count = 0
-    for example in test_data:
-      if dt.predict(example) is True:
+    for i in range(len(test_data)):
+      if dt.predict(test_data[i]) == answers[i]:
         number_correct += 1
-      elif dt.predict(example) is None:
+      elif dt.predict(test_data[i]) is None:
         none_count += 1
-    accuracy = number_correct / len(test_data)
+    accuracy = number_correct / (len(test_data) - none_count)
     print('decision tree', number_correct, len(test_data), accuracy)
 
   def test_hotter_today_random_forest(self):
     data, attributes = construct_hotter_daily_data(self.data, 'training')
-    test_data, test_attrs = construct_hotter_daily_data(self.data, 'testing')
+    test_data, test_attrs, answers = construct_hotter_daily_data(self.data, 'testing')
     rf = RandomForest(10,len(test_attrs)-3,len(test_attrs))
     rf.train(data,attributes)
     self.assertIsNotNone(rf)
     number_correct = 0
     none_count = 0
-    for example in test_data:
-      if rf.predict(example) is True:
+    for i in range(len(test_data)):
+      if rf.predict(test_data[i]) == answers[i]:
         number_correct += 1
-      elif rf.predict(example) is None:
+      elif rf.predict(test_data[i]) is None:
         none_count += 1
     accuracy = number_correct / (len(test_data) - none_count)
     print('random forest', number_correct, len(test_data), accuracy)

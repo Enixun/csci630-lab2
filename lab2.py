@@ -4,6 +4,7 @@ from json import dumps, loads
 from datetime import timedelta
 from src.data_collector import WeatherReport
 from src.decision_tree import DecisionTree
+from src.random_forest import RandomForest
 
 def data_store(file='./raw.json',operation='r',data=None,indent=None):
   """
@@ -123,23 +124,35 @@ def construct_hotter_daily_data(weather_data:dict,nested=None)->DecisionTree:
     data.append(tuple(attrs))
 
   if nested == 'testing':
+    answers = tuple(map(lambda x: x[len(x) - 1],data))
     data = tuple(map(lambda x: x[:-1],data))
-    new_attributes = new_attributes[:-1] 
+    new_attributes = new_attributes[:-1]
+    return (data, new_attributes, answers)
   return (data, new_attributes)
 
 
-def predict(model_type:str,day5:dict,day4:dict,day3:dict,day2:dict,day1:dict):
+def predict(model_type:str,day5:dict=None,day4:dict=None,day3:dict=None,day2:dict=None,day1:dict=None):
+  report_data = get_training_data()
+  examples, attributes = construct_hotter_daily_data(report_data, 'training')
   model = None
   if model_type == 'besttree':
-    model = DecisionTree
-  # elif model_type == 'bestforest':
-    # TODO: RandomForest
+    model = DecisionTree(examples, list(attributes))
+  elif model_type == 'bestforest':
+    model = RandomForest(9, len(attributes) - 5)
+    model.train(examples, list(attributes))
   else: raise Exception('Invalid model')
-  hotter_than_yesterday = model()
-  return []
+  test_examples, _, answers = construct_hotter_daily_data(report_data, 'testing')
+  num_correct = 0
+  for i in range(len(test_examples)):
+    if model.predict(test_examples[i]) == answers[i]:
+      num_correct += 1
+  print('accuracy', num_correct / len(test_examples))
+  return [model.predict(test_examples[0])]
 
 
 if __name__ == "__main__":
-  data = get_training_data()
+  # data = get_training_data()
 
-  construct_hotter_daily_data(data)
+  # construct_hotter_daily_data(data)
+  print(predict('besttree'))
+  print(predict('bestforest'))
