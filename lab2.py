@@ -260,12 +260,12 @@ def predict(model_type:str,day5:dict,day4:dict,day3:dict,day2:dict,day1:dict):
     # ] = None
   # print(aggregate['reports'].keys())
 
-  report_data = get_training_data('./raw.json')
+  report_data = get_training_data('./raw1.json')
   set1, attr1 = construct_hotter_daily_data(report_data, 'training')
   set2, attr2 = construct_precip_data(report_data, 'training')
   actual1, _1 = construct_hotter_daily_data(aggregate, 'reports')
   actual2, _2 = construct_precip_data(aggregate, 'reports')
-  
+
   if model_type == 'besttree':
     model1 = DecisionTree(set1, list(attr1))
     model3 = DecisionTree(set2, list(attr2))
